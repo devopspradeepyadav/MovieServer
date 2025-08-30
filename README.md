@@ -27,6 +27,8 @@ cd MovieServer
 Install docker and docker compose :
 ```bash
 curl https://get.docker.com | bash
+sudo usermod -aG docker $USER
+newgrp docker
 ````
 
 ### 2. **Start Jellyfin with Docker Compose**

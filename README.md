@@ -1,12 +1,14 @@
 # Jellyfin Movie Server with Nginx Reverse Proxy
 
 This project provides a detailed guide on setting up a **Jellyfin Movie Server** using **Docker** and **Nginx** for reverse proxying. It also explains how to expose Jellyfin to the internet and configure HTTPS using **Certbot**.
+
+
 <img width="1919" height="1007" alt="Screenshot From 2025-08-30 12-43-45" src="https://github.com/user-attachments/assets/d0a142db-798f-4064-955e-b7f29f7dfe01" />
 
 ## Prerequisites
 
 Before you begin, make sure you have the following:
-
+- Understanding of networking and linux commands
 - A server running **Ubuntu or any other Linux OS** (or a similar Linux-based OS or VM).
 - A domain (e.g., `yourmovieserver.com`) pointing to your server's IP address (set up DNS).
 
@@ -17,11 +19,11 @@ Before you begin, make sure you have the following:
 Clone this repository to your server:
 
 ```bash
-git clone https://github.com/devopspradeepyadav/movieserver-jellyfin.git
+git clone https://github.com/devopspradeepyadav/MovieServer.git
 cd movieserver-jellyfin
 ````
 
-Install docker :
+Install docker and its components:
 ```bash
 curl https://get.docker.com | bash
 ````

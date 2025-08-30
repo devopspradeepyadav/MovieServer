@@ -185,6 +185,9 @@ To confirm the server is working:
 1. Open a web browser.
 2. Navigate to `http://movies.example.com` or `https://movies.example.com` (depending on whether SSL is configured).
 3. Log in to Jellyfin, and check that your media libraries and other configurations are intact.
+4. Keep the movies under the folder `/home/ubuntu/movies` or the respective directory
+<img width="1920" height="928" alt="image" src="https://github.com/user-attachments/assets/fc8fb631-315c-44b4-a9b5-752e51cb38e2" />
+ 
 
 ### **Monitor the Server**
 

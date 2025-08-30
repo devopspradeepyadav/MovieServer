@@ -7,10 +7,11 @@ This project provides a detailed guide on setting up a **Jellyfin Movie Server**
 
 ## Prerequisites
 
-Before you begin, make sure you have the following:
-- Understanding of networking and linux commands
-- A server running **Ubuntu or any other Linux OS** (or a similar Linux-based OS or VM).
-- A domain (e.g., `yourmovieserver.com`) pointing to your server's IP address (set up DNS).
+* **Ubuntu 20.04/22.04/24.04/latest** or any other similar Linux-based OS.
+* **Docker** & **Docker Compose** installed.
+* **Nginx** installed for reverse proxying.
+* A registered domain (e.g., `movies.example.com`) pointing to your server's public IP.
+* Optionally, **Certbot** for SSL certificate management.
 
 ## Steps to Set Up Jellyfin Server
 
@@ -20,10 +21,10 @@ Clone this repository to your server:
 
 ```bash
 git clone https://github.com/devopspradeepyadav/MovieServer.git
-cd movieserver-jellyfin
+cd MovieServer
 ````
 
-Install docker and its components:
+Install docker and docker compose :
 ```bash
 curl https://get.docker.com | bash
 ````
@@ -51,18 +52,20 @@ sudo apt install nginx
 
 #### 3.2 **Create Nginx Configuration File**
 
-Create a new configuration file for your domain in `/etc/nginx/sites-available/yourmovieserver.com`:
+Create a new Nginx configuration file for your domain:
 
 ```bash
-sudo nano /etc/nginx/sites-available/yourmovieserver.com
+sudo nano /etc/nginx/sites-available/movies.example.com
 ```
 
-Paste the following code into the file (adjust the domain and paths as needed):
+Add the following configuration:
 
-```
+#### **For HTTP Only (No SSL)**
+
+```nginx
 server {
     listen 80;
-    server_name yourmovieserver.com www.yourmovieserver.com;
+    server_name movies.example.com www.movies.example.com;
 
     location / {
         proxy_pass http://localhost:8096;  # Forward traffic to Jellyfin on port 8096
@@ -72,11 +75,45 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    error_log /var/log/nginx/yourmovieserver.com_error.log;
-    access_log /var/log/nginx/yourmovieserver.com_access.log;
+    error_log /var/log/nginx/movies.example.com_error.log;
+    access_log /var/log/nginx/movies.example.com_access.log;
+}
+```
+
+#### **For HTTPS with SSL (Secure Setup)**
+
+```nginx
+server {
+    listen 80;
+    server_name movies.example.com www.movies.example.com;
+    return 301 https://$host$request_uri;  # HTTP to HTTPS redirection
 }
 
+server {
+    listen 443 ssl;
+    server_name movies.example.com www.movies.example.com;
+
+    ssl_certificate /etc/nginx/ssl/movies.example.com.crt;
+    ssl_certificate_key /etc/nginx/ssl/movies.example.com.key;
+
+    location / {
+        proxy_pass http://localhost:8096;  # Forward traffic to Jellyfin on port 8096
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    error_log /var/log/nginx/movies.example.com_error.log;
+    access_log /var/log/nginx/movies.example.com_access.log;
+}
 ```
+
+**Notes:**
+
+* Replace `movies.example.com` with your actual domain.
+* The `ssl_certificate` and `ssl_certificate_key` should point to your SSL certificate and private key files.
+* Make sure to replace `localhost` with the internal Docker IP or `localhost` if you’re directly forwarding from the host.
 
 #### 3.3 **Enable the Nginx Configuration**
 
@@ -118,24 +155,59 @@ To secure your site with HTTPS, use **Certbot** to obtain an SSL certificate:
 
 3. Follow the prompts and Certbot will automatically configure your Nginx for HTTPS.
 
-### 5. **Access Your Jellyfin Server**
 
-Once everything is set up, you should be able to access your Jellyfin server at `https://yourmovieserver.com`. Nginx will proxy the requests to the Jellyfin Docker container running on port `8096`.
+## **4. Automating SSL Certificate Renewal (If Using Let's Encrypt)**
 
-If you don not have a Domain, you can simply get the IP address of your machine and get the movie server running
+SSL certificates provided by Let's Encrypt are valid for 90 days. To ensure they automatically renew, set up a cron job:
+
+```bash
+sudo crontab -e
 ```
-curl -4 ifconfig.me
+
+Add the following line to renew the certificates:
+
+```bash
+0 0,12 * * * certbot renew --quiet && systemctl reload nginx
 ```
-Enter the IP address in your browser.
-You need to keep  movies under the folder
 
-### Notes:
-
-1. **docker-compose.yml**: Make sure the file is included in your repository and properly configured.
-2. **Nginx Configuration**: The Nginx configuration is set up to proxy requests to Jellyfin, along with SSL configuration using Certbot.
-3. **Customization**: Feel free to adjust paths, domain names, and configurations as needed for your specific environment.
+This will check for renewals twice daily and reload Nginx to apply any updated certificates.
 
 ---
+
+## **5. Testing and Monitoring**
+
+### **Test the Movie Server**
+
+To confirm the server is working:
+
+1. Open a web browser.
+2. Navigate to `http://movies.example.com` or `https://movies.example.com` (depending on whether SSL is configured).
+3. Log in to Jellyfin, and check that your media libraries and other configurations are intact.
+
+### **Monitor the Server**
+
+Use monitoring tools like **Prometheus**, **Grafana**, or **Datadog** to keep an eye on server metrics like CPU usage, memory, and network traffic. This is especially important for production systems.
+
+Additionally, check logs periodically:
+
+* **Jellyfin logs**: Located in the Docker container or mounted volume at `./config/logs`.
+* **Nginx logs**: Located at `/var/log/nginx/`.
+
+## **6. Setting up DNS**
+
+### **Setup DNS record for pointing the website to your Domain Name**
+
+``` Type A
+Name @
+Data <your-server-ip>
+TTL 3600/1 Hour
+
+for ex- 
+
+Type Name Data              TTL
+A	 @	  210.79.129.50	    1 Hour		
+```
+
 
 ## License
 
